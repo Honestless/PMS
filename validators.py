@@ -1,6 +1,6 @@
 from datetime import datetime
 
-
+#---- Input validation class ---- #
 class ProjectInputValidator:
     def __init__(self):
         self.title = ""

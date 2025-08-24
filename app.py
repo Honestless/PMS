@@ -1,9 +1,9 @@
 import json
-from os import system
 from validators import ProjectInputValidator
 from rich.console import Console
 from rich.table import Table
 from storage import save_projects, load_projects, get_next_id
+
 from domain import (
     add_project,
     search_by_deadline,
@@ -12,18 +12,22 @@ from domain import (
     search_by_title,
     edit_project,
     delete_project,
+    search_projects,
 )
 
 # ---------Creating Objects ---------
 console = Console()
 
 projects = load_projects()
+
+# --------- Application State ---------
 state = {
     "projects": projects,
     "next_project_id": get_next_id(projects),
     "RUNNING": True
     }
 
+# --------- Application Logic ---------
 def list_projects(projects=None):
     table = Table(title="Project Management Software")
     if projects is None:
@@ -47,6 +51,8 @@ def list_projects(projects=None):
             color = "red"
         table.add_row(str(p.get("id")), p.get("title", ""), p.get("details", ""), p.get("deadline", ""), f"[bold {color}]{p.get('priority', '')}[/]")
     console.print(table)
+
+# --- Search UI ---
 def search_ui():
     search_choices = ['Search by ID', "Search by title", 'Search by deadline', 'Search by priority']
 
@@ -66,15 +72,18 @@ def search_ui():
 
     else:
         print("Please choose one of the available options")
+
+# --- Main Menu Input Handler ---
 def get_input():
-    menu_number = ['1', '2', '3', '4', '5', '6']
+
+    menu_number = ['1', '2', '3', '4', '5', 'q']
     choices = ['Add Project', 'List Projects', 'Edit Projects', 'Remove Projects','Search','Quit']
     for i, choice in enumerate(choices, start=1):
         print(f"{i}. {choice}")
     user_choice = input(">>> ")
 
     if user_choice not in menu_number:
-         print("Please choose one of the available options")
+        print("Please choose one of the available options")
 
     elif user_choice == "1":
         pv = ProjectInputValidator()
@@ -89,9 +98,10 @@ def get_input():
         state["next_project_id"] += 1
         save_projects(state["projects"])
         print("✅ Project added successfully!")
-    
+        return True
     elif user_choice == "2":
         list_projects()
+        return True
 
     elif user_choice == '3':
         edit_project_id = int(input("Enter the ID number of the project you would like to edit:\n>>> "))
@@ -109,20 +119,25 @@ def get_input():
             print("Project was edited successfully!")
         else:
             print("Project not found.")
+        return True
     elif user_choice == '4':
-         remove_project_id = int(input("Enter the ID number of the project you would like to remove:\n>>> "))
-         state['projects'], ok = delete_project(state['projects'], remove_project_id)
-         if ok:
+        remove_project_id = int(input("Enter the ID number of the project you would like to remove:\n>>> "))
+        state['projects'], ok = delete_project(state['projects'], remove_project_id)
+        if ok:
             save_projects(state['projects'])
             print("Project was deleted successfully!")
-         else:
+        else:
             print("Project not found.")
-
-        
+        return True
     
     elif user_choice == "5":
         search_ui()
+        return True
+    elif user_choice == "q".lower():
+        print("Good Bye")
+        return False
 
+# --------- Main Application Loop ---------
 while state['RUNNING']:
     print("Welcome to the Project Management Software")
     print("Please choose one of the following options: ")
